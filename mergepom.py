@@ -7,7 +7,7 @@ import logging, sys, subprocess, shlex, codecs, re
 import xml.dom.minidom as dom
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, filename='pommerge.log')
+#logging.basicConfig(level=logging.INFO, filename='pommerge.log')
 #logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 def get_enc(line, default):
