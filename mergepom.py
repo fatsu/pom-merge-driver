@@ -3,8 +3,12 @@
 # Copyright 2013 Ralf Thielow <ralf.thielow@gmail.com>
 # Licensed under the GNU GPL version 2.
 
-import sys, subprocess, shlex, codecs, re
+import logging, sys, subprocess, shlex, codecs, re
 import xml.dom.minidom as dom
+
+logger = logging.getLogger(__name__)
+#logging.basicConfig(level=logging.INFO, filename='pommerge.log')
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 def get_enc(line, default):
         m = re.search('encoding=[\'"](.*?)[\'"]', line)
@@ -25,8 +29,8 @@ def get_tag(f):
                         return matchingNodes.firstChild.nodeValue
                 return None
         except Exception as e:
-                print(e)
-                print(sys.argv[0] + ': error while parsing pom.xml')
+                logger.error(e)
+                logger.error(sys.argv[0] + ': error while parsing pom.xml')
                 return None
 
 def change_version(old_version, new_version, cont):
@@ -53,11 +57,11 @@ def get_project_version(f):
                         # may return None
                         return parent_version
         except:
-                print(sys.argv[0] + ': error while parsing pom.xml')
+                logger.error(sys.argv[0] + ': error while parsing pom.xml')
                 return None
 
 if len(sys.argv) < 4 or len(sys.argv) > 5:
-        print("Wrong number of arguments.")
+        logger.error("Wrong number of arguments.")
         sys.exit(-1)
 
 ancestor_version = get_project_version(sys.argv[1])
@@ -119,13 +123,13 @@ if (p.returncode == 0 and val == 'true'):
 # When rebasing, we always want to keep the other_branch_version (branch being rebased)
 # Unless one has explicitly checked-out by revision-id, branch should only be 'HEAD' when rebasing
 if (branch == 'HEAD'):
-        print('Rebasing pom version ' + other_branch_version + ' into ' + branch)
+        logger.info('Rebasing pom version ' + other_branch_version + ' into ' + branch)
 
 # revert pom project version on current branch, unless in master. Allows for gitflow release-finish, hotfix-finish, and feature-finish to work better
 elif (current_branch_version is not None and (keep or branch != 'master')):
-        print('Merging pom version ' + other_branch_version + ' into ' + branch + '. Keeping version ' + current_branch_version)
+        logger.info('Merging pom version ' + other_branch_version + ' into ' + branch + '. Keeping version ' + current_branch_version)
         git_merge_res_str = change_version(other_branch_version, current_branch_version, git_merge_res_str)
-        print('Merging pom scm tag ' + other_tag + ' into ' + branch + '. Keeping scm tag ' + current_tag) if have_tags else 0
+        logger.info('Merging pom scm tag ' + other_tag + ' into ' + branch + '. Keeping scm tag ' + current_tag) if have_tags else 0
         git_merge_res_str = change_tag(other_tag, current_tag, git_merge_res_str) if have_tags else git_merge_res_str
 
 with codecs.open(sys.argv[2], 'w', enc) as f:
